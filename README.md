@@ -1,6 +1,6 @@
 # Image Sorter App
 
-I need to sort some images, and instead of doing it manually. Clearly spending more time creating this script is the way to go.
+I need to sort some images, and instead of doing it manually spending more time creating this script is totally the way to go.
 
 ## Features
 
