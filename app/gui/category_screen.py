@@ -1,44 +1,124 @@
-"""Category management screen — create, edit, remove categories."""
+"""Category management screen — create, edit, remove categories + folder settings."""
 
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import messagebox, simpledialog, filedialog
 
 from app.models.category import validate_category_name
-from app.services import category_service
+from app.services import category_service, settings_service
 
 
 class CategoryScreen(tk.Frame):
-    """Screen for managing image sorting categories."""
+    """Screen for managing image sorting categories and folder settings."""
 
     def __init__(self, master, on_continue_callback):
         super().__init__(master)
         self.on_continue = on_continue_callback
         self._build_ui()
         self._refresh_list()
+        self._refresh_folders()
 
     def _build_ui(self):
         # ── Title ──
         title = tk.Label(
             self,
-            text="Manage Categories",
-            font=("Segoe UI", 18, "bold"),
+            text="Image Sorter",
+            font=("Segoe UI", 20, "bold"),
             fg="#e0e0e0",
             bg="#1e1e2e",
         )
-        title.pack(pady=(20, 5))
+        title.pack(pady=(15, 2))
+
+        # ── Folder settings section ──
+        folder_section = tk.LabelFrame(
+            self,
+            text="  📁 Folder Settings  ",
+            font=("Segoe UI", 11, "bold"),
+            fg="#c084fc",
+            bg="#1e1e2e",
+            bd=1,
+            relief="groove",
+            highlightbackground="#3a3a5c",
+        )
+        folder_section.pack(padx=20, pady=(10, 5), fill="x")
+
+        # Warning banner
+        warning_frame = tk.Frame(folder_section, bg="#451a03")
+        warning_frame.pack(fill="x", padx=8, pady=(8, 5))
+        warning_label = tk.Label(
+            warning_frame,
+            text="⚠  Images will be MOVED, not copied! Keep a backup!",
+            font=("Segoe UI", 10, "bold"),
+            fg="#fbbf24",
+            bg="#451a03",
+        )
+        warning_label.pack(padx=10, pady=5)
+
+        # Input folder row
+        input_row = tk.Frame(folder_section, bg="#1e1e2e")
+        input_row.pack(fill="x", padx=8, pady=3)
+
+        tk.Label(
+            input_row, text="Input:", font=("Segoe UI", 10, "bold"),
+            fg="#a0a0a0", bg="#1e1e2e", width=7, anchor="w",
+        ).pack(side="left")
+
+        self.input_dir_label = tk.Label(
+            input_row, text="", font=("Segoe UI", 9),
+            fg="#d0d0d0", bg="#2a2a3d", anchor="w", relief="flat",
+        )
+        self.input_dir_label.pack(side="left", fill="x", expand=True, padx=(0, 5), ipady=3, ipadx=5)
+
+        tk.Button(
+            input_row, text="Browse", font=("Segoe UI", 9),
+            bg="#374151", fg="#e0e0e0", activebackground="#4b5563",
+            activeforeground="white", relief="flat", cursor="hand2",
+            command=self._browse_input,
+        ).pack(side="right", ipady=1, ipadx=6)
+
+        # Output folder row
+        output_row = tk.Frame(folder_section, bg="#1e1e2e")
+        output_row.pack(fill="x", padx=8, pady=(3, 8))
+
+        tk.Label(
+            output_row, text="Output:", font=("Segoe UI", 10, "bold"),
+            fg="#a0a0a0", bg="#1e1e2e", width=7, anchor="w",
+        ).pack(side="left")
+
+        self.output_dir_label = tk.Label(
+            output_row, text="", font=("Segoe UI", 9),
+            fg="#d0d0d0", bg="#2a2a3d", anchor="w", relief="flat",
+        )
+        self.output_dir_label.pack(side="left", fill="x", expand=True, padx=(0, 5), ipady=3, ipadx=5)
+
+        tk.Button(
+            output_row, text="Browse", font=("Segoe UI", 9),
+            bg="#374151", fg="#e0e0e0", activebackground="#4b5563",
+            activeforeground="white", relief="flat", cursor="hand2",
+            command=self._browse_output,
+        ).pack(side="right", ipady=1, ipadx=6)
+
+        # ── Categories section title ──
+        cat_title = tk.Label(
+            self,
+            text="Manage Categories",
+            font=("Segoe UI", 14, "bold"),
+            fg="#e0e0e0",
+            bg="#1e1e2e",
+        )
+        cat_title.pack(pady=(10, 2))
 
         hint = tk.Label(
             self,
             text='Use format:  image-category-name  (lowercase, hyphens only)',
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 9),
             fg="#888",
             bg="#1e1e2e",
         )
-        hint.pack(pady=(0, 10))
+        hint.pack(pady=(0, 5))
 
         # ── Add category row ──
         add_frame = tk.Frame(self, bg="#1e1e2e")
-        add_frame.pack(pady=5, padx=20, fill="x")
+        add_frame.pack(pady=3, padx=20, fill="x")
 
         self.entry = tk.Entry(
             add_frame,
@@ -71,7 +151,7 @@ class CategoryScreen(tk.Frame):
 
         # ── Category list ──
         list_frame = tk.Frame(self, bg="#1e1e2e")
-        list_frame.pack(pady=10, padx=20, fill="both", expand=True)
+        list_frame.pack(pady=5, padx=20, fill="both", expand=True)
 
         scrollbar = tk.Scrollbar(list_frame)
         scrollbar.pack(side="right", fill="y")
@@ -93,7 +173,7 @@ class CategoryScreen(tk.Frame):
 
         # ── Action buttons ──
         btn_frame = tk.Frame(self, bg="#1e1e2e")
-        btn_frame.pack(pady=5, padx=20, fill="x")
+        btn_frame.pack(pady=3, padx=20, fill="x")
 
         rename_btn = tk.Button(
             btn_frame,
@@ -136,9 +216,36 @@ class CategoryScreen(tk.Frame):
             cursor="hand2",
             command=self._on_continue,
         )
-        self.continue_btn.pack(pady=(10, 20), ipady=6, ipadx=20)
+        self.continue_btn.pack(pady=(8, 15), ipady=6, ipadx=20)
 
-    # ── Actions ──
+    # ── Folder actions ──
+
+    def _browse_input(self):
+        current = settings_service.get_settings()["input_dir"]
+        folder = filedialog.askdirectory(
+            title="Select Input Images Folder",
+            initialdir=current,
+        )
+        if folder:
+            settings_service.set_input_dir(folder)
+            self._refresh_folders()
+
+    def _browse_output(self):
+        current = settings_service.get_settings()["output_dir"]
+        folder = filedialog.askdirectory(
+            title="Select Output (Sorted Images) Folder",
+            initialdir=current,
+        )
+        if folder:
+            settings_service.set_output_dir(folder)
+            self._refresh_folders()
+
+    def _refresh_folders(self):
+        settings = settings_service.get_settings()
+        self.input_dir_label.config(text=settings["input_dir"])
+        self.output_dir_label.config(text=settings["output_dir"])
+
+    # ── Category actions ──
 
     def _add_category(self):
         name = self.entry.get().strip()

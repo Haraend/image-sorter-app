@@ -3,18 +3,18 @@
 import shutil
 from pathlib import Path
 
-# Output directory (project root / sorted-images)
-SORTED_DIR = Path(__file__).resolve().parent.parent.parent / "sorted-images"
+from app.services.settings_service import get_output_dir
 
 
 def sort_image(image_path: Path, category_name: str) -> None:
-    """Move an image into sorted-images/<category_name>/.
+    """Move an image into <output_dir>/<category_name>/.
 
     Creates the category subdirectory if it doesn't exist.
     If a file with the same name already exists in the target directory,
     a numeric suffix is appended to avoid overwriting.
     """
-    category_dir = SORTED_DIR / category_name
+    sorted_dir = get_output_dir()
+    category_dir = sorted_dir / category_name
     category_dir.mkdir(parents=True, exist_ok=True)
 
     destination = category_dir / image_path.name

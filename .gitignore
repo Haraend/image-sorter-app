@@ -9,10 +9,16 @@ env/
 
 # App runtime data
 app/data/categories.json
+app/data/settings.json
 
 # Image folders (user content)
 images/*
 sorted-images/*
+
+# PyInstaller build
+build/
+dist/
+*.spec
 
 # IDE
 .vscode/

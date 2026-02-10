@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PIL import Image, ImageTk
 
-from app.services import category_service, image_service, sorting_service
+from app.services import category_service, image_service, sorting_service, settings_service
 
 
 class SortingScreen(tk.Frame):
@@ -191,9 +191,10 @@ class SortingScreen(tk.Frame):
         self._show_current_image()
 
     def _show_no_images(self):
+        input_dir = settings_service.get_input_dir()
         self.image_label.config(
             image="",
-            text="No images found in the images/ folder.\n\nAdd images and restart the app.",
+            text=f"No images found in:\n{input_dir}\n\nAdd images to the input folder and restart.",
             font=("Segoe UI", 14),
             fg="#fbbf24",
         )
