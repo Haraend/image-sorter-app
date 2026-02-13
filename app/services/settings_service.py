@@ -7,10 +7,8 @@ from pathlib import Path
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 SETTINGS_FILE = DATA_DIR / "settings.json"
 
-# Defaults — relative to project root
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_INPUT_DIR = str(_PROJECT_ROOT / "images")
-DEFAULT_OUTPUT_DIR = str(_PROJECT_ROOT / "sorted-images")
+# Default — current working directory (the folder the user launches from)
+DEFAULT_INPUT_DIR = str(Path.cwd())
 
 
 def _ensure_data_dir() -> None:
@@ -21,7 +19,6 @@ def get_settings() -> dict:
     """Load settings from disk. Returns defaults if file doesn't exist."""
     defaults = {
         "input_dir": DEFAULT_INPUT_DIR,
-        "output_dir": DEFAULT_OUTPUT_DIR,
     }
 
     if not SETTINGS_FILE.exists():
@@ -51,19 +48,12 @@ def get_input_dir() -> Path:
 
 
 def get_output_dir() -> Path:
-    """Return the configured output directory as a Path."""
-    return Path(get_settings()["output_dir"])
+    """Return the output directory — always <input_dir>/sorted."""
+    return get_input_dir() / "sorted"
 
 
 def set_input_dir(path: str) -> None:
     """Update the input directory."""
     settings = get_settings()
     settings["input_dir"] = path
-    save_settings(settings)
-
-
-def set_output_dir(path: str) -> None:
-    """Update the output directory."""
-    settings = get_settings()
-    settings["output_dir"] = path
     save_settings(settings)

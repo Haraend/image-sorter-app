@@ -53,12 +53,12 @@ class CategoryScreen(tk.Frame):
         )
         warning_label.pack(padx=10, pady=5)
 
-        # Input folder row
+        # Folder row
         input_row = tk.Frame(folder_section, bg="#1e1e2e")
         input_row.pack(fill="x", padx=8, pady=3)
 
         tk.Label(
-            input_row, text="Input:", font=("Segoe UI", 10, "bold"),
+            input_row, text="Folder:", font=("Segoe UI", 10, "bold"),
             fg="#a0a0a0", bg="#1e1e2e", width=7, anchor="w",
         ).pack(side="left")
 
@@ -75,27 +75,20 @@ class CategoryScreen(tk.Frame):
             command=self._browse_input,
         ).pack(side="right", ipady=1, ipadx=6)
 
-        # Output folder row
+        # Sorted-to row (read-only, derived from folder)
         output_row = tk.Frame(folder_section, bg="#1e1e2e")
         output_row.pack(fill="x", padx=8, pady=(3, 8))
 
         tk.Label(
-            output_row, text="Output:", font=("Segoe UI", 10, "bold"),
-            fg="#a0a0a0", bg="#1e1e2e", width=7, anchor="w",
+            output_row, text="Sorted to:", font=("Segoe UI", 10),
+            fg="#707070", bg="#1e1e2e", width=7, anchor="w",
         ).pack(side="left")
 
         self.output_dir_label = tk.Label(
-            output_row, text="", font=("Segoe UI", 9),
-            fg="#d0d0d0", bg="#2a2a3d", anchor="w", relief="flat",
+            output_row, text="", font=("Segoe UI", 9, "italic"),
+            fg="#909090", bg="#1e1e2e", anchor="w",
         )
-        self.output_dir_label.pack(side="left", fill="x", expand=True, padx=(0, 5), ipady=3, ipadx=5)
-
-        tk.Button(
-            output_row, text="Browse", font=("Segoe UI", 9),
-            bg="#374151", fg="#e0e0e0", activebackground="#4b5563",
-            activeforeground="white", relief="flat", cursor="hand2",
-            command=self._browse_output,
-        ).pack(side="right", ipady=1, ipadx=6)
+        self.output_dir_label.pack(side="left", fill="x", expand=True, padx=(0, 5))
 
         # ── Categories section title ──
         cat_title = tk.Label(
@@ -223,27 +216,16 @@ class CategoryScreen(tk.Frame):
     def _browse_input(self):
         current = settings_service.get_settings()["input_dir"]
         folder = filedialog.askdirectory(
-            title="Select Input Images Folder",
+            title="Select Images Folder",
             initialdir=current,
         )
         if folder:
             settings_service.set_input_dir(folder)
             self._refresh_folders()
 
-    def _browse_output(self):
-        current = settings_service.get_settings()["output_dir"]
-        folder = filedialog.askdirectory(
-            title="Select Output (Sorted Images) Folder",
-            initialdir=current,
-        )
-        if folder:
-            settings_service.set_output_dir(folder)
-            self._refresh_folders()
-
     def _refresh_folders(self):
-        settings = settings_service.get_settings()
-        self.input_dir_label.config(text=settings["input_dir"])
-        self.output_dir_label.config(text=settings["output_dir"])
+        self.input_dir_label.config(text=settings_service.get_settings()["input_dir"])
+        self.output_dir_label.config(text=str(settings_service.get_output_dir()))
 
     # ── Category actions ──
 
